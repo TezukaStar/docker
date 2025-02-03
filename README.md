@@ -45,9 +45,6 @@ sudo systemctl enable --now docker
 # เพิ่ม User เข้า Group Docker
 sudo usermod -aG docker $USER
 
-# ใช้ newgrp เพื่อให้ User ใช้ Docker ได้เลยโดยไม่ต้อง Logout
-exec sg docker newgrp id -gn
-
 echo "✅ Docker ติดตั้งเสร็จแล้ว!"
 echo "🚀 คุณสามารถใช้ Docker ได้เลยโดยไม่ต้อง Logout 🎉"
 ```
