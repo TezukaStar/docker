@@ -3,10 +3,10 @@
 
 ## 📌 ขั้นตอนการติดตั้ง Docker บน Ubuntu Server
 
-### ✅ 1. สร้างไฟล์ `install_docker.sh`
+### ✅ 1. สร้างไฟล์ `docker.sh`
 รันคำสั่งนี้ใน **Ubuntu Terminal**:
 ```sh
-sudo nano install_docker.sh
+sudo nano docker.sh
 ```
 📌 คัดลอกโค้ดต่อไปนี้ไปวางในไฟล์:
 
@@ -52,7 +52,16 @@ echo "✅ Docker ติดตั้งเสร็จแล้ว!"
 echo "🚀 คุณสามารถใช้ Docker ได้เลยโดยไม่ต้อง Logout 🎉"
 
 ```sh
-./install_docker.sh
+
+### ✅ 2. ให้สิทธิ์รันไฟล์ `install_docker.sh`
+รันคำสั่งนี้ใน **Ubuntu Terminal**:
+```sh
+chmod +x docker.sh
+```
+### ✅ 3. รันไฟล์ติดตั้ง Docker
+รันคำสั่งนี้ใน **Ubuntu Terminal**:
+```sh
+./docker.sh
 ```
 
 ✅ **เสร็จเรียบร้อย!** 🚀 ตอนนี้คุณสามารถใช้งาน **Docker ได้เลย โดยไม่ต้อง Logout** 🎉
