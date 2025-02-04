@@ -1,5 +1,5 @@
 # Docker
-# 🚀 ติดตั้ง Docker บน Ubuntu
+# 🚀 ติดตั้งและถอนการติดตั้ง Docker บน Ubuntu
 
 ## 📌 ขั้นตอนการติดตั้ง Docker บน Ubuntu Server
 
@@ -106,3 +106,40 @@ chmod +x install_docker.sh
 ```
 
 ✅ **เสร็จเรียบร้อย!** 🚀 ตอนนี้คุณสามารถใช้งาน **Docker ได้เลย โดยไม่ต้อง Logout** 🎉
+
+---
+
+## ❌ ขั้นตอนการถอนการติดตั้ง Docker
+
+### 🔥 1. สร้างไฟล์ `uninstall_docker.sh`
+รันคำสั่งนี้ใน **Ubuntu Terminal**:
+```sh
+sudo nano uninstall_docker.sh
+```
+📌 คัดลอกโค้ดต่อไปนี้ไปวางในไฟล์:
+
+```sh
+#!/bin/bash
+
+set -e
+
+echo "[INFO] กำลังลบ Docker..."
+systemctl stop docker || true
+systemctl disable docker || true
+apt-get purge -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker.io || true
+rm -rf /var/lib/docker /var/lib/containerd /etc/apt/keyrings/docker.gpg /etc/apt/sources.list.d/docker.list
+groupdel docker || true
+echo "✅ Docker ถูกถอนการติดตั้งเรียบร้อยแล้ว!"
+```
+
+### 🔥 2. ให้สิทธิ์รันไฟล์ `uninstall_docker.sh`
+```sh
+chmod +x uninstall_docker.sh
+```
+
+### 🔥 3. รันไฟล์ถอนการติดตั้ง Docker
+```sh
+./uninstall_docker.sh
+```
+
+✅ **เสร็จเรียบร้อย!** 🚀 Docker ถูกลบออกจากระบบแล้ว 🎉
