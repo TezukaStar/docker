@@ -1,36 +1,80 @@
 #!/bin/bash
 
+# ออกจาก script ทันทีหากเกิดข้อผิดพลาด
+set -e
+
+# ฟังก์ชันแจ้งข้อผิดพลาดและออกจาก script
+error_exit() {
+    echo "[ERROR] $1" >&2
+    exit 1
+}
+
+# ฟังก์ชันแจ้งข้อมูล
+info() {
+    echo "[INFO] $1"
+}
+
+# ตรวจสอบว่าสคริปต์รันด้วยสิทธิ์ root หรือไม่
+if [ "$EUID" -ne 0 ]; then
+    error_exit "กรุณารันสคริปต์ด้วยสิทธิ์ root หรือใช้ sudo"
+fi
+
+# ตรวจสอบ OS
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$NAME
+    VERSION=$VERSION_ID
+else
+    error_exit "ไม่สามารถตรวจสอบ OS ได้"
+fi
+info "กำลังติดตั้ง Docker บน $OS $VERSION"
+
+# ลบ Docker เวอร์ชันเก่า (ถ้ามี)
+info "กำลังลบ Docker เวอร์ชันเก่าที่ติดตั้งไว้..."
+apt-get remove -y docker.io docker-doc docker-compose podman-docker containerd runc || true
+
 # อัปเดตแพ็กเกจและติดตั้ง dependencies
-sudo apt update -y
-sudo apt install -y ca-certificates curl gnupg
+info "กำลังอัปเดตแพ็กเกจและติดตั้ง dependencies..."
+apt-get update -y
+apt-get install -y ca-certificates curl gnupg
 
-# ลบ GPG Key เก่าและเพิ่ม GPG Key ใหม่
-sudo rm -rf /etc/apt/keyrings/docker.gpg
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
-sudo chmod a+r /etc/apt/keyrings/docker.gpg
+# ลบ GPG Key เก่าก่อนเพิ่มใหม่
+info "กำลังจัดการ GPG Key ของ Docker..."
+rm -rf /etc/apt/keyrings/docker.gpg
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+chmod a+r /etc/apt/keyrings/docker.gpg
 
-# เพิ่ม Docker Repository
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
-https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
-sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+# ตั้งค่า Docker Repository
+info "กำลังเพิ่ม Docker Repository..."
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# ตรวจสอบว่าไฟล์ repository ถูกต้อง
-cat /etc/apt/sources.list.d/docker.list
+# อัปเดตแพ็กเกจอีกครั้ง
+info "กำลังอัปเดตแพ็กเกจ..."
+apt-get update -y
 
-# อัปเดตแพ็กเกจและติดตั้ง Docker
-sudo apt update -y
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || \
-sudo apt install -y docker.io  # ติดตั้ง docker.io ถ้าตัวหลักไม่สามารถใช้ได้
+# ติดตั้ง Docker
+info "กำลังติดตั้ง Docker..."
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin || \
+apt-get install -y docker.io  # ใช้ docker.io เป็นตัวเลือกสำรองหากติดตั้งตัวหลักไม่ได้
 
-# ตรวจสอบเวอร์ชัน
-docker --version
+# ตรวจสอบเวอร์ชัน Docker
+if docker --version; then
+    info "Docker ติดตั้งเรียบร้อยแล้ว!"
+else
+    error_exit "การติดตั้ง Docker ล้มเหลว!"
+fi
 
-# เปิดใช้ Docker และตั้งค่าให้เริ่มอัตโนมัติ
-sudo systemctl enable --now docker
+# เปิดใช้งาน Docker และตั้งค่าให้เริ่มอัตโนมัติ
+info "กำลังเปิดใช้งาน Docker..."
+systemctl enable --now docker
 
 # เพิ่ม User เข้า Group Docker
-sudo usermod -aG docker $USER
+if [ "$SUDO_USER" ]; then
+    info "กำลังเพิ่มผู้ใช้ $SUDO_USER เข้า group docker..."
+    usermod -aG docker $SUDO_USER
+    info "โปรดออกจากระบบและเข้าสู่ระบบใหม่เพื่อให้มีผล"
+fi
 
-echo "✅ Docker ติดตั้งเสร็จแล้ว!"
-echo "🚀 คุณสามารถใช้ Docker ได้เลยโดยไม่ต้อง Logout 🎉"
+# แสดงข้อความสำเร็จ
+info "✅ Docker ติดตั้งเสร็จสมบูรณ์! 🚀"
